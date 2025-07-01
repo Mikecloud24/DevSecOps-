@@ -97,5 +97,3 @@ stages:
           - task: MavenAuthenticate@0
             inputs:
               artifactsFeeds: 'bankapp-maven-feed'
-
-

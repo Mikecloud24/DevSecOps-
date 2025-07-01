@@ -1,0 +1,49 @@
+
+trigger:
+- none
+
+pool:
+  name: DEVOPS-POOL
+  demands: 
+    - agent.name -equals Agent-01
+
+stages:
+  - stage: Compile
+    displayName: 'Maven Compile'
+    jobs:
+      - job: Maven_Compile
+        displayName: 'Maven_Compile'
+        steps:
+          - task: Maven@4
+            inputs:
+              azureSubscription: 'ARM_SVC'
+              mavenPomFile: 'pom.xml'
+              goals: 'Compile'
+              publishJUnitResults: true
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              javaHomeOption: 'JDKVersion'
+              mavenVersionOption: 'Default'
+              mavenAuthenticateFeed: false
+              effectivePomSkip: false
+              sonarQubeRunAnalysis: false
+
+  - stage: test
+    displayName: 'Maven Test'
+    jobs:
+      - job: Maven_Test
+        displayName: 'Unit_Test'
+        steps:
+          - task: Maven@4
+            inputs:
+              azureSubscription: 'ARM_SVC'
+              mavenPomFile: 'pom.xml'
+              goals: 'Test'
+              publishJUnitResults: true
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              javaHomeOption: 'JDKVersion'
+              mavenVersionOption: 'Default'
+              mavenAuthenticateFeed: false
+              effectivePomSkip: false
+              sonarQubeRunAnalysis: false
+
+

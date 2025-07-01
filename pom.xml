@@ -111,13 +111,15 @@
 
 		 <distributionManagement>
         <repository>
-            <id>maven-releases</id>
-            <url>http://13.233.143.130:8081/repository/maven-releases/</url>
-        </repository>
-        <snapshotRepository>
-            <id>maven-snapshots</id>
-            <url>http://13.233.143.130:8081/repository/maven-snapshots/</url>
-        </snapshotRepository>
+  <id>bankapp-maven-feed</id>
+  <url>https://pkgs.dev.azure.com/ethagbemichael0395/Multi-Tier-Application/_packaging/bankapp-maven-feed/maven/v1</url>
+  <releases>
+    <enabled>true</enabled>
+  </releases>
+  <snapshots>
+    <enabled>true</enabled>
+  </snapshots>
+</repository>
 
 		 </distributionManagement>
 

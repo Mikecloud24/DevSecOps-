@@ -37,7 +37,7 @@ stages:
             inputs:
               azureSubscription: 'ARM_SVC'
               mavenPomFile: 'pom.xml'
-              goals: 'Test'
+              goals: 'test'
               publishJUnitResults: true
               testResultsFiles: '**/surefire-reports/TEST-*.xml'
               javaHomeOption: 'JDKVersion'

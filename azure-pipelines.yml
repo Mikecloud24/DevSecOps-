@@ -82,6 +82,9 @@ stages:
       - job: publish_artifacts
         displayName: 'Publish_Build_Artifacts'
         steps:
+          - task: MavenAuthenticate@0
+            inputs:
+              artifactsFeeds: 'bankapp-maven-feed'
           - task: Maven@4
             inputs:
               azureSubscription: 'ARM_SVC'
@@ -94,6 +97,3 @@ stages:
               mavenAuthenticateFeed: false
               effectivePomSkip: false
               sonarQubeRunAnalysis: false
-          - task: MavenAuthenticate@0
-            inputs:
-              artifactsFeeds: 'bankapp-maven-feed'

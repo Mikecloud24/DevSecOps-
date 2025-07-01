@@ -71,5 +71,9 @@ stages:
               cliProjectName: 'bankapp'
               cliSources: '.'
               extraProperties: 'sonar.java.binaries=.'
+          
+          - task: SonarQubeAnalyze@7
+            inputs:
+              jdkversion: 'JAVA_HOME_17_X64'
 
 

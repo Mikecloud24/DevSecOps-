@@ -114,3 +114,13 @@ stages:
               command: 'build'
               Dockerfile: '**/Dockerfile'
               tags: 'latest'
+    
+  - stage: trivy_image_scan
+    displayName: 'Trivy Image Scan'
+    jobs:
+      - job: trivy_image_scan
+        displayName: 'Trivy Image Scan'
+        steps:
+          - task: CmdLine@2
+            inputs:
+              script: 'trivy image --format table -o image.html democontainer7.azurecr.io/devcontainer:latest'

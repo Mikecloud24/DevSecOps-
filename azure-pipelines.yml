@@ -106,7 +106,7 @@ stages:
         steps:
           - task: CmdLine@2
             inputs:
-              script: 'maven package'
+              script: 'mvn package'
           - task: Docker@2
             inputs:
               containerRegistry: 'docker-svc'

@@ -46,4 +46,30 @@ stages:
               effectivePomSkip: false
               sonarQubeRunAnalysis: false
 
+  - stage: trivy_fs_scan
+    displayName: 'Trivy FS Scan'
+    jobs:
+      - job: trivy_fs_scan
+        displayName: 'Trivy FS Scan'
+        steps:
+          - task: CmdLine@2
+            inputs:
+              script: 'trivy fs --format table -o fs.html .'
+
+  - stage: sonarqube
+    displayName: 'SonarAnalysis'
+    jobs:
+      - job: sonarqube_analysis
+        displayName: 'Sonar_Analysis'
+        steps:
+          - task: SonarQubePrepare@7
+            inputs:
+              SonarQube: 'sonar-svc'
+              scannerMode: 'cli'
+              configMode: 'manual'
+              cliProjectKey: 'bankapp'
+              cliProjectName: 'bankapp'
+              cliSources: '.'
+              extraProperties: 'sonar.java.binaries=.'
+
 

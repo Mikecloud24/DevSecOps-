@@ -1,0 +1,124 @@
+trigger:
+  - none
+
+variables:
+  azureSubscription: 'ARM_SVC'                       # service connection for ACR & Key Vault
+  kubernetesServiceConnection: 'AKS-SVC'             # service connection for AKS
+  acrName: 'democontainer7.azurecr.io'               # your ACR login server
+  imageName: '$(acrName)/devcontainer'               # image repo
+  imageTag: '$(Build.BuildId)'                       # unique tag per build
+
+pool:
+  name: DEVOPS-POOL
+  demands:
+    - agent.name -equals Agent-01                    # specify your agent pool and demands, i used self-hosted agent, you can use Microsoft-hosted agent as well
+
+stages:
+
+  - stage: Build
+    displayName: 'Build, Test & Package'
+    jobs:
+      - job: Maven_Build
+        displayName: 'Maven Build & Test'
+        steps:
+          - task: Maven@4
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              mavenPomFile: 'pom.xml'
+              goals: 'clean package'
+              javaHomeOption: 'JDKVersion'
+              publishJUnitResults: true
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+          - publish: '$(System.DefaultWorkingDirectory)/target/*.jar'
+            artifact: 'app-jar'
+
+  - stage: CodeAnalysis
+    displayName: 'Trivy FS Scan & SonarQube'
+    dependsOn: Build
+    jobs:
+
+      - job: Trivy_FS_Scan
+        displayName: 'Trivy Filesystem Scan'
+        steps:
+          - script: |
+              trivy fs --exit-code 1 --severity HIGH,CRITICAL --format table -o trivy-fs-report.txt .
+            displayName: 'Run Trivy FS Scan'
+
+      - job: SonarQube_Analysis
+        displayName: 'SonarQube Code Quality'
+        steps:
+          - task: SonarQubePrepare@7
+            inputs:
+              SonarQube: 'sonar-svc'
+              scannerMode: 'CLI'
+              configMode: 'manual'
+              cliProjectKey: 'bankapp'
+              cliProjectName: 'bankapp'
+              cliSources: '.'
+              extraProperties: 'sonar.java.binaries=.'
+          - task: SonarQubeAnalyze@7
+          - task: SonarQubePublish@7
+
+  - stage: DockerBuildPush
+    displayName: 'Docker Build & Push + Trivy Image Scan'
+    dependsOn: CodeAnalysis
+    jobs:
+
+      - job: Build_And_Push
+        displayName: 'Build & Push Image'
+        steps:
+          - download: current
+            artifact: app-jar
+
+          - task: Docker@2
+            displayName: 'Build and Push to ACR'
+            inputs:
+              containerRegistry: 'docker-svc'
+              repository: '$(imageName)'
+              command: 'buildAndPush'
+              Dockerfile: 'Dockerfile'
+              tags: |
+                $(imageTag)
+
+      - job: Trivy_Image_Scan
+        displayName: 'Trivy Image Scan'
+        dependsOn: Build_And_Push
+        steps:
+          - script: |
+              trivy image --exit-code 1 --severity HIGH,CRITICAL \
+                --format table -o trivy-image-report.txt $(imageName):$(imageTag)
+            displayName: 'Run Trivy Image Scan'
+
+  - stage: Deploy
+    displayName: 'Deploy to AKS'
+    dependsOn: DockerBuildPush
+    jobs:
+
+      - job: Deploy_To_AKS
+        displayName: 'Apply Kubernetes Manifests'
+        steps:
+          - task: AzureKeyVault@2
+            displayName: 'Fetch Secrets from Key Vault'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              KeyVaultName: 'bankapp-kv'
+              SecretsFilter: 'mysql-root-password,spring-datasource-username,spring-datasource-password'
+              RunAsPreJob: false
+
+          - task: KubernetesManifest@1
+            displayName: 'Deploy All Manifests to AKS'
+            inputs:
+              action: 'deploy'
+              kubernetesServiceConnection: '$(kubernetesServiceConnection)'
+              namespace: 'default'
+              manifests: |
+                k8s/mysql-cred.yaml
+                k8s/mysql-deployment.yaml
+                k8s/mysql-service.yaml
+                k8s/bankapp-config.yaml
+                k8s/bankapp-deployment.yaml
+                k8s/bankapp-service.yaml
+                k8s/bankapp-hpa.yaml
+                k8s/network-policy.yaml
+              containers: |
+                devcontainer=$(imageName):$(imageTag)

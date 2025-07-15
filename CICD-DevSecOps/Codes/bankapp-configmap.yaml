@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bankapp-config
+data:
+  SPRING_DATASOURCE_URL: jdbc:mysql://mysql-service:3306/bankappdb?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: bankapp-secret
+type: Opaque
+stringData:
+  SPRING_DATASOURCE_USERNAME: root
+  SPRING_DATASOURCE_PASSWORD: Test@123

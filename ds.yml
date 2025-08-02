@@ -20,7 +20,7 @@ spec:
         name: mysql
         env:
         - name: MYSQL_ROOT_PASSWORD
-          value: "Test@123"
+          value: ""
         - name: MYSQL_DATABASE
           value: "bankappdb"
         ports:
@@ -64,7 +64,7 @@ spec:
         - name: SPRING_DATASOURCE_USERNAME
           value: root
         - name: SPRING_DATASOURCE_PASSWORD
-          value: Test@123
+          value: 
 ---
 # Bank Application Service
 apiVersion: v1
